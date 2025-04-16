@@ -3,6 +3,15 @@ import boto3
 import json
 from datetime import datetime
 
+
+sts = boto3.client('sts')
+print("Identity:")
+print(sts.get_caller_identity())
+
+session = boto3.session.Session()
+print("Region:", session.region_name)
+print("Profile:", session.profile_name)
+
 # Page config
 st.set_page_config(page_title="Eyecare X Chatbot", layout="wide")
 
