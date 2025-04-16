@@ -1,7 +1,6 @@
 import streamlit as st
 import boto3
 import json
-import os
 from datetime import datetime
 
 # Page config
@@ -22,7 +21,12 @@ if not st.session_state.authenticated:
     st.stop()
 
 # --- AWS setup ---
-bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
+bedrock = boto3.client(
+    "bedrock-runtime",
+    region_name="us-east-1",
+    aws_access_key_id=st.secrets["AWS_ACCESS_KEY_ID"],
+    aws_secret_access_key=st.secrets["AWS_SECRET_ACCESS_KEY"]
+)
 model_id = "anthropic.claude-v2"
 
 # --- Session State ---
@@ -179,7 +183,7 @@ if st.button("End Conversation"):
     summary_body = {
         "prompt": summary_prompt,
         "max_tokens_to_sample": 150,
-        "temperature": 0.3,
+        "temperature": 0.1,
         "top_k": 100,
         "top_p": 0.9,
         "stop_sequences": ["\n\nHuman:"]
