@@ -178,6 +178,8 @@ if user_input:
 
     except Exception as e:
         st.error(f"Model Error: {e}")
+        st.code(e.response, language='json')
+
 
 # --- End Conversation + Doctor Summary ---
 if st.button("End Conversation"):
