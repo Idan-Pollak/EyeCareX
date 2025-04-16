@@ -8,15 +8,6 @@ from datetime import datetime
 # Page config
 st.set_page_config(page_title="Eyecare X Chatbot", layout="wide")
 
-sts = boto3.client('sts')
-st.write("Identity:")
-st.write(sts.get_caller_identity())
-
-session = boto3.session.Session()
-st.write("Region:", session.region_name)
-st.write("Profile:", session.profile_name)
-
-
 # --- Password Gate ---
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
@@ -178,8 +169,6 @@ if user_input:
 
     except Exception as e:
         st.error(f"Model Error: {e}")
-        st.code(e.response, language='json')
-
 
 # --- End Conversation + Doctor Summary ---
 if st.button("End Conversation"):
