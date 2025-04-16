@@ -22,7 +22,6 @@ if not st.session_state.authenticated:
     st.stop()  # Stop execution if not authenticated
 
 # --- AWS setup ---
-
 bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
 model_id = "anthropic.claude-v2"
 
@@ -116,28 +115,33 @@ with col2:
 
 # --- Process Input ---
 if user_input:
+    # Add user's message to session state
     st.session_state.messages.append({
         "role": "user",
         "content": user_input,
         "time": datetime.now().strftime("%H:%M")
     })
 
+    # Create system context based on selected disease and prescription
     system_context = ""
     if selected_disease != "None":
         system_context += f"Patient has been diagnosed with {selected_disease}. "
     if prescription:
         system_context += f"Patient prescription: {prescription}. "
 
+    # Build prompt: Start with the system context, followed by conversation history
     prompt = f"{system_context}\n\n"
     for msg in st.session_state.messages:
         role = "Human" if msg["role"] == "user" else "Assistant"
         prompt += f"{role}: {msg['content']}\n\n"
+    
+    # Ensure that the prompt ends with "Assistant:" to signal the assistant's response
     prompt += "Assistant:"
 
     body = {
         "prompt": prompt,
-        "max_tokens_to_sample": 500,
-        "temperature": 0.1,
+        "max_tokens_to_sample": 200,  # Limit the token count for shorter responses
+        "temperature": 0.1,  # Moderate creativity (adjust for better brevity)
         "top_k": 250,
         "top_p": 1,
         "stop_sequences": ["\n\nHuman:"]
@@ -152,6 +156,11 @@ if user_input:
         )
         output = json.loads(response['body'].read())["completion"].strip()
 
+        # Truncate to approximately 4-5 sentences
+        sentences = output.split(". ")
+        output = ". ".join(sentences[:5]) + ("." if len(sentences) > 5 else "")
+
+        # Append the assistant's response to the session state
         st.session_state.messages.append({
             "role": "assistant",
             "content": output,
