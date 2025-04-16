@@ -7,17 +7,30 @@ from datetime import datetime
 # Page config
 st.set_page_config(page_title="Eyecare X Chatbot", layout="wide")
 
-# AWS setup
-os.environ["AWS_ACCESS_KEY_ID"] = "AKIAQKKPJHKHBOZP5M7U"
-os.environ["AWS_SECRET_ACCESS_KEY"] = "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"
+# --- Password Gate ---
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    st.title("🔐 Eyecare X Access")
+    password_input = st.text_input("Enter Password:", type="password")
+    if password_input == "Justin12345":
+        st.session_state.authenticated = True
+        st.rerun()
+    elif password_input:
+        st.error("Incorrect password. Please try again.")
+    st.stop()  # Stop execution if not authenticated
+
+# --- AWS setup ---
+
 bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
 model_id = "anthropic.claude-v2"
 
-# Session State
+# --- Session State ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# CSS Styles
+# --- CSS Styles ---
 st.markdown("""
 <style>
     .header {
@@ -48,12 +61,12 @@ st.markdown("""
     .user-message {
         background-color: #3498db;
         color: white;
-        margin-left: auto;
+        margin-right: auto;
     }
     .assistant-message {
         background-color: #f0f2f5;
         color: black;
-        margin-right: auto;
+        margin-left: auto;
     }
     .message-time {
         font-size: 0.7rem;
@@ -63,14 +76,13 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Layout: Chat Center - Sidebar Right
+# --- Layout: Chat Center - Sidebar Right ---
 col1, col2 = st.columns([3, 1])
 
 # --- Chat Section ---
 with col1:
     st.markdown('<div class="header">👁️ Eyecare X Chat Assistant</div>', unsafe_allow_html=True)
-    
-   # st.markdown('<div class="chat-box" id="chat-box">', unsafe_allow_html=True)
+
     if not st.session_state.messages:
         st.markdown("""
         <div class="message assistant-message">
@@ -87,11 +99,9 @@ with col1:
             <div class="message-time">{msg.get("time", datetime.now().strftime('%H:%M'))}</div>
         </div>
         """, unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 
-    # Input
-    user_input = st.text_input("Type your message:")
-    send = st.button("Send")
+    # Input with Enter key (no Submit button)
+    user_input = st.chat_input("Type your message and press Enter")
 
 # --- Sidebar Section ---
 with col2:
@@ -105,15 +115,13 @@ with col2:
         st.rerun()
 
 # --- Process Input ---
-if send and user_input:
-    # Store user message
+if user_input:
     st.session_state.messages.append({
         "role": "user",
         "content": user_input,
         "time": datetime.now().strftime("%H:%M")
     })
 
-    # Construct model prompt
     system_context = ""
     if selected_disease != "None":
         system_context += f"Patient has been diagnosed with {selected_disease}. "
@@ -126,11 +134,10 @@ if send and user_input:
         prompt += f"{role}: {msg['content']}\n\n"
     prompt += "Assistant:"
 
-    # Bedrock call
     body = {
         "prompt": prompt,
         "max_tokens_to_sample": 500,
-        "temperature": 0.5,
+        "temperature": 0.1,
         "top_k": 250,
         "top_p": 1,
         "stop_sequences": ["\n\nHuman:"]
