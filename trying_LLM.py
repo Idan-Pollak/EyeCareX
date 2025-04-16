@@ -12,14 +12,14 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
-    st.title("🔐 Eyecare X Access")
+    st.title("Eyecare X Access")
     password_input = st.text_input("Enter Password:", type="password")
     if password_input == "Justin12345":
         st.session_state.authenticated = True
         st.rerun()
     elif password_input:
         st.error("Incorrect password. Please try again.")
-    st.stop()  # Stop execution if not authenticated
+    st.stop()
 
 # --- AWS setup ---
 bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
@@ -80,7 +80,7 @@ col1, col2 = st.columns([3, 1])
 
 # --- Chat Section ---
 with col1:
-    st.markdown('<div class="header">👁️ Eyecare X Chat Assistant</div>', unsafe_allow_html=True)
+    st.markdown('<div class="header">Eyecare X Chat Assistant</div>', unsafe_allow_html=True)
 
     if not st.session_state.messages:
         st.markdown("""
@@ -99,7 +99,6 @@ with col1:
         </div>
         """, unsafe_allow_html=True)
 
-    # Input with Enter key (no Submit button)
     user_input = st.chat_input("Type your message and press Enter")
 
 # --- Sidebar Section ---
@@ -109,39 +108,35 @@ with col2:
     selected_disease = st.selectbox("Eye Condition", ["None", "Cataracts", "Glaucoma", "AMD", "Dry Eye", "Conjunctivitis"])
     prescription = st.text_input("Prescription")
 
-    if st.button("🧼 Reset Chat"):
+    if st.button("🪼 Reset Chat"):
         st.session_state.messages = []
         st.rerun()
 
 # --- Process Input ---
 if user_input:
-    # Add user's message to session state
     st.session_state.messages.append({
         "role": "user",
         "content": user_input,
         "time": datetime.now().strftime("%H:%M")
     })
 
-    # Create system context based on selected disease and prescription
     system_context = ""
     if selected_disease != "None":
         system_context += f"Patient has been diagnosed with {selected_disease}. "
     if prescription:
         system_context += f"Patient prescription: {prescription}. "
 
-    # Build prompt: Start with the system context, followed by conversation history
     prompt = f"{system_context}\n\n"
     for msg in st.session_state.messages:
         role = "Human" if msg["role"] == "user" else "Assistant"
         prompt += f"{role}: {msg['content']}\n\n"
-    
-    # Ensure that the prompt ends with "Assistant:" to signal the assistant's response
+
     prompt += "Assistant:"
 
     body = {
         "prompt": prompt,
-        "max_tokens_to_sample": 200,  # Limit the token count for shorter responses
-        "temperature": 0.1,  # Moderate creativity (adjust for better brevity)
+        "max_tokens_to_sample": 200,
+        "temperature": 0.1,
         "top_k": 250,
         "top_p": 1,
         "stop_sequences": ["\n\nHuman:"]
@@ -156,16 +151,51 @@ if user_input:
         )
         output = json.loads(response['body'].read())["completion"].strip()
 
-        # Truncate to approximately 4-5 sentences
         sentences = output.split(". ")
         output = ". ".join(sentences[:5]) + ("." if len(sentences) > 5 else "")
 
-        # Append the assistant's response to the session state
         st.session_state.messages.append({
             "role": "assistant",
             "content": output,
             "time": datetime.now().strftime("%H:%M")
         })
         st.rerun()
+
     except Exception as e:
         st.error(f"Model Error: {e}")
+
+# --- End Conversation + Doctor Summary ---
+if st.button("End Conversation"):
+    full_chat = ""
+    for msg in st.session_state.messages:
+        role = "Human" if msg["role"] == "user" else "Assistant"
+        full_chat += f"{role}: {msg['content']}\n\n"
+
+    summary_prompt = (
+        f"Summarize the following eyecare conversation between a patient and an assistant "
+        f"in 2-3 sentences for a doctor to review:\n\n{full_chat}Human: Please summarize the conversation.\n\nAssistant:"
+    )
+
+    summary_body = {
+        "prompt": summary_prompt,
+        "max_tokens_to_sample": 150,
+        "temperature": 0.3,
+        "top_k": 100,
+        "top_p": 0.9,
+        "stop_sequences": ["\n\nHuman:"]
+    }
+
+    try:
+        summary_response = bedrock.invoke_model(
+            body=json.dumps(summary_body),
+            modelId=model_id,
+            accept='application/json',
+            contentType='application/json'
+        )
+        summary_text = json.loads(summary_response['body'].read())["completion"].strip()
+
+        st.subheader("Doctor Summary Preview")
+        st.write(summary_text)
+
+    except Exception as e:
+        st.error(f"Error generating summary: {e}")
