@@ -3,8 +3,6 @@ import boto3
 import json
 from datetime import datetime
 
-
-
 # Page config
 st.set_page_config(page_title="Eyecare X Chatbot", layout="wide")
 
@@ -15,7 +13,7 @@ if "authenticated" not in st.session_state:
 if not st.session_state.authenticated:
     st.title("Eyecare X Access")
     password_input = st.text_input("Enter Password:", type="password")
-    if password_input == "Justin12345":
+    if password_input == st.secrets["ACCESS_PASSWORD"]:
         st.session_state.authenticated = True
         st.rerun()
     elif password_input:
@@ -30,9 +28,15 @@ lambda_client = boto3.client(
     aws_secret_access_key=st.secrets["AWS_SECRET_ACCESS_KEY"]
 )
 
-# --- Session State ---
+# --- Session State Initialization ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if "selected_disease" not in st.session_state:
+    st.session_state.selected_disease = "None"
+if "severity" not in st.session_state:
+    st.session_state.severity = "Mild"
+if "prescription" not in st.session_state:
+    st.session_state.prescription = ""
 
 # --- CSS Styles ---
 st.markdown("""
@@ -110,11 +114,25 @@ with col1:
 with col2:
     st.subheader("Patient Info")
 
-    selected_disease = st.selectbox("Eye Condition", ["None", "Cataracts", "Glaucoma", "AMD", "Dry Eye", "Conjunctivitis"])
-    prescription = st.text_input("Prescription")
+    st.session_state.selected_disease = st.selectbox(
+        "Eye Condition",
+        ["None", "Cataracts", "Glaucoma", "AMD", "Dry Eye", "Conjunctivitis"],
+        index=["None", "Cataracts", "Glaucoma", "AMD", "Dry Eye", "Conjunctivitis"].index(st.session_state.selected_disease)
+    )
+
+    st.session_state.severity = st.selectbox(
+        "Eye Condition Severity",
+        ["Mild", "Moderate", "Severe", "Very Severe"],
+        index=["Mild", "Moderate", "Severe", "Very Severe"].index(st.session_state.severity)
+    )
+
+    st.session_state.prescription = st.text_input("Prescription", value=st.session_state.prescription)
 
     if st.button("🪼 Reset Chat"):
         st.session_state.messages = []
+        st.session_state.selected_disease = "None"
+        st.session_state.severity = "Mild"
+        st.session_state.prescription = ""
         st.rerun()
 
 # --- Process Input ---
@@ -126,16 +144,15 @@ if user_input:
     })
 
     system_context = ""
-    if selected_disease != "None":
-        system_context += f"Patient has been diagnosed with {selected_disease}. "
-    if prescription:
-        system_context += f"Patient prescription: {prescription}. "
+    if st.session_state.selected_disease != "None":
+        system_context += f"Patient has been diagnosed with {st.session_state.selected_disease}, severity: {st.session_state.severity}. "
+    if st.session_state.prescription:
+        system_context += f"Patient prescription: {st.session_state.prescription}. "
 
     prompt = f"{system_context}\n\n"
     for msg in st.session_state.messages:
         role = "Human" if msg["role"] == "user" else "Assistant"
         prompt += f"{role}: {msg['content']}\n\n"
-
     prompt += "Assistant:"
 
     lambda_payload = {
@@ -153,11 +170,11 @@ if user_input:
             InvocationType='RequestResponse',
             Payload=json.dumps(lambda_payload)
         )
-        
+
         response_payload = json.loads(response['Payload'].read())
         if response_payload.get('statusCode') == 200:
             output = json.loads(response_payload['body'])['completion']
-            
+
             sentences = output.split(". ")
             output = ". ".join(sentences[:5]) + ("." if len(sentences) > 5 else "")
 
@@ -168,7 +185,7 @@ if user_input:
             })
         else:
             st.error(f"Lambda Error: {response_payload.get('body', 'Unknown error')}")
-            
+
         st.rerun()
 
     except Exception as e:
@@ -201,11 +218,11 @@ if st.button("End Conversation"):
             InvocationType='RequestResponse',
             Payload=json.dumps(summary_payload)
         )
-        
+
         summary_payload = json.loads(summary_response['Payload'].read())
         if summary_payload.get('statusCode') == 200:
             summary_text = json.loads(summary_payload['body'])['completion']
-            
+
             st.subheader("Doctor Summary Preview")
             st.write(summary_text)
         else:
