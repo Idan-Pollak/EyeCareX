@@ -23,13 +23,12 @@ if not st.session_state.authenticated:
     st.stop()
 
 # --- AWS setup ---
-bedrock = boto3.client(
-    "bedrock-runtime",
+lambda_client = boto3.client(
+    "lambda",
     region_name="us-east-1",
     aws_access_key_id=st.secrets["AWS_ACCESS_KEY_ID"],
     aws_secret_access_key=st.secrets["AWS_SECRET_ACCESS_KEY"]
 )
-model_id = "anthropic.claude-v2"
 
 # --- Session State ---
 if "messages" not in st.session_state:
@@ -139,7 +138,7 @@ if user_input:
 
     prompt += "Assistant:"
 
-    body = {
+    lambda_payload = {
         "prompt": prompt,
         "max_tokens_to_sample": 200,
         "temperature": 0.1,
@@ -149,26 +148,31 @@ if user_input:
     }
 
     try:
-        response = bedrock.invoke_model(
-            body=json.dumps(body),
-            modelId=model_id,
-            accept='application/json',
-            contentType='application/json'
+        response = lambda_client.invoke(
+            FunctionName='BedrockLambdaStack-BedrockHandler433D43D0-vjeiJrovzbTj',
+            InvocationType='RequestResponse',
+            Payload=json.dumps(lambda_payload)
         )
-        output = json.loads(response['body'].read())["completion"].strip()
+        
+        response_payload = json.loads(response['Payload'].read())
+        if response_payload.get('statusCode') == 200:
+            output = json.loads(response_payload['body'])['completion']
+            
+            sentences = output.split(". ")
+            output = ". ".join(sentences[:5]) + ("." if len(sentences) > 5 else "")
 
-        sentences = output.split(". ")
-        output = ". ".join(sentences[:5]) + ("." if len(sentences) > 5 else "")
-
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": output,
-            "time": datetime.now().strftime("%H:%M")
-        })
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": output,
+                "time": datetime.now().strftime("%H:%M")
+            })
+        else:
+            st.error(f"Lambda Error: {response_payload.get('body', 'Unknown error')}")
+            
         st.rerun()
 
     except Exception as e:
-        st.error(f"Model Error: {e}")
+        st.error(f"Error: {str(e)}")
 
 # --- End Conversation + Doctor Summary ---
 if st.button("End Conversation"):
@@ -182,7 +186,7 @@ if st.button("End Conversation"):
         f"in 2-3 sentences for a doctor to review:\n\n{full_chat}Human: Please summarize the conversation.\n\nAssistant:"
     )
 
-    summary_body = {
+    summary_payload = {
         "prompt": summary_prompt,
         "max_tokens_to_sample": 150,
         "temperature": 0.1,
@@ -192,16 +196,20 @@ if st.button("End Conversation"):
     }
 
     try:
-        summary_response = bedrock.invoke_model(
-            body=json.dumps(summary_body),
-            modelId=model_id,
-            accept='application/json',
-            contentType='application/json'
+        summary_response = lambda_client.invoke(
+            FunctionName='BedrockLambdaStack-BedrockHandler433D43D0-vjeiJrovzbTj',
+            InvocationType='RequestResponse',
+            Payload=json.dumps(summary_payload)
         )
-        summary_text = json.loads(summary_response['body'].read())["completion"].strip()
-
-        st.subheader("Doctor Summary Preview")
-        st.write(summary_text)
+        
+        summary_payload = json.loads(summary_response['Payload'].read())
+        if summary_payload.get('statusCode') == 200:
+            summary_text = json.loads(summary_payload['body'])['completion']
+            
+            st.subheader("Doctor Summary Preview")
+            st.write(summary_text)
+        else:
+            st.error(f"Lambda Error: {summary_payload.get('body', 'Unknown error')}")
 
     except Exception as e:
-        st.error(f"Error generating summary: {e}")
+        st.error(f"Error generating summary: {str(e)}")
