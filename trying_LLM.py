@@ -199,8 +199,8 @@ if st.button("End Conversation"):
         full_chat += f"{role}: {msg['content']}\n\n"
 
     summary_prompt = (
-        f"Summarize the following eyecare conversation between a patient and an assistant "
-        f"in 2-3 sentences for a doctor to review:\n\n{full_chat}Human: Please summarize the conversation.\n\nAssistant:"
+        f"Human: Please provide a concise 2-3 sentence summary of the following "
+        f"eyecare conversation between a patient and an assistant:\n\n{full_chat}\n\nAssistant:"
     )
 
     summary_payload = {
