@@ -214,7 +214,7 @@ if st.button("End Conversation"):
 
     try:
         summary_response = lambda_client.invoke(
-            FunctionName='BedrockLambdaStack-ChatLambda59BC07ED-bB4ACOZYc1VQ',
+            FunctionName='BedrockLambdaStack-SummaryLambdaF6C7BDD0-bJ1no1BrtAbH',
             InvocationType='RequestResponse',
             Payload=json.dumps(summary_payload)
         )
