@@ -1,3 +1,7 @@
 {
-  "environment": "aws://022177987214/us-east-1"
-} 
+  "environment": "aws://022177987214/us-east-1",
+  "acknowledged-issue-numbers": [
+    32775,
+    32775
+  ]
+}

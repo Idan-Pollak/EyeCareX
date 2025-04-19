@@ -166,7 +166,7 @@ if user_input:
 
     try:
         response = lambda_client.invoke(
-            FunctionName='BedrockLambdaStack-BedrockHandler433D43D0-vjeiJrovzbTj',
+            FunctionName='ChatLambda59BC07ED',
             InvocationType='RequestResponse',
             Payload=json.dumps(lambda_payload)
         )
@@ -214,7 +214,7 @@ if st.button("End Conversation"):
 
     try:
         summary_response = lambda_client.invoke(
-            FunctionName='BedrockLambdaStack-BedrockHandler433D43D0-vjeiJrovzbTj',
+            FunctionName='ChatLambda59BC07ED',
             InvocationType='RequestResponse',
             Payload=json.dumps(summary_payload)
         )

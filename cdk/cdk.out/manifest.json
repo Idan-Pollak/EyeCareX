@@ -19,7 +19,7 @@
         "notificationArns": [],
         "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-${AWS::Region}",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-${AWS::Region}",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/5737038f74c834a4f8cb2024f9aae640bcb0a4ff3321c654891bb4611aee7948.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/f952102b910bae53888a75aba9486c5a12562ce8f3340ca9f3c1f1e20ea7b0af.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -47,10 +47,16 @@
             "data": "BedrockLambdaRoleDefaultPolicy2B15E2BA"
           }
         ],
-        "/BedrockLambdaStack/BedrockHandler/Resource": [
+        "/BedrockLambdaStack/ChatLambda/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "BedrockHandler433D43D0"
+            "data": "ChatLambda59BC07ED"
+          }
+        ],
+        "/BedrockLambdaStack/SummaryLambda/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SummaryLambdaF6C7BDD0"
           }
         ],
         "/BedrockLambdaStack/CDKMetadata/Default": [

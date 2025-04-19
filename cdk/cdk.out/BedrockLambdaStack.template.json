@@ -58,16 +58,16 @@
     "aws:cdk:path": "BedrockLambdaStack/BedrockLambdaRole/DefaultPolicy/Resource"
    }
   },
-  "BedrockHandler433D43D0": {
+  "ChatLambda59BC07ED": {
    "Type": "AWS::Lambda::Function",
    "Properties": {
     "Code": {
      "S3Bucket": {
       "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
      },
-     "S3Key": "3516d7a194c618d734e8c014a301a10aed072b98864c027cff79f0e108db7ad7.zip"
+     "S3Key": "060d20a8606485300d716819aed82956dd60139d2846a5dd5eab4ad0ef8707d6.zip"
     },
-    "Handler": "bedrock_handler.lambda_handler",
+    "Handler": "bedrock_handler.chat_handler",
     "MemorySize": 256,
     "Role": {
      "Fn::GetAtt": [
@@ -83,8 +83,39 @@
     "BedrockLambdaRole5231C31F"
    ],
    "Metadata": {
-    "aws:cdk:path": "BedrockLambdaStack/BedrockHandler/Resource",
-    "aws:asset:path": "asset.3516d7a194c618d734e8c014a301a10aed072b98864c027cff79f0e108db7ad7",
+    "aws:cdk:path": "BedrockLambdaStack/ChatLambda/Resource",
+    "aws:asset:path": "asset.060d20a8606485300d716819aed82956dd60139d2846a5dd5eab4ad0ef8707d6",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "SummaryLambdaF6C7BDD0": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+     },
+     "S3Key": "060d20a8606485300d716819aed82956dd60139d2846a5dd5eab4ad0ef8707d6.zip"
+    },
+    "Handler": "bedrock_handler.summary_handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "BedrockLambdaRole5231C31F",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.9",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "BedrockLambdaRoleDefaultPolicy2B15E2BA",
+    "BedrockLambdaRole5231C31F"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "BedrockLambdaStack/SummaryLambda/Resource",
+    "aws:asset:path": "asset.060d20a8606485300d716819aed82956dd60139d2846a5dd5eab4ad0ef8707d6",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
