@@ -198,18 +198,12 @@ if st.button("End Conversation"):
         role = "Human" if msg["role"] == "user" else "Assistant"
         full_chat += f"{role}: {msg['content']}\n\n"
 
-    summary_prompt = (
-        f"Human: Please provide a concise 2-3 sentence summary of the following "
-        f"eyecare conversation between a patient and an assistant:\n\n{full_chat}\n\nAssistant:"
-    )
-
     summary_payload = {
-        "prompt": summary_prompt,
+        "text": full_chat,
         "max_tokens_to_sample": 150,
-        "temperature": 0.1,
-        "top_k": 100,
-        "top_p": 0.9,
-        "stop_sequences": ["\n\nHuman:"]
+        "temperature": 0.3,
+        "top_k": 250,
+        "top_p": 1
     }
 
     try:
@@ -221,7 +215,7 @@ if st.button("End Conversation"):
 
         summary_payload = json.loads(summary_response['Payload'].read())
         if summary_payload.get('statusCode') == 200:
-            summary_text = json.loads(summary_payload['body'])['completion']
+            summary_text = json.loads(summary_payload['body'])['summary']
 
             st.subheader("Doctor Summary Preview")
             st.write(summary_text)
