@@ -31,10 +31,6 @@ lambda_client = boto3.client(
 # --- Session State Initialization ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
-if "selected_disease" not in st.session_state:
-    st.session_state.selected_disease = "None"
-if "severity" not in st.session_state:
-    st.session_state.severity = "Mild"
 if "prescription" not in st.session_state:
     st.session_state.prescription = ""
 
@@ -114,24 +110,10 @@ with col1:
 with col2:
     st.subheader("Patient Info")
 
-    st.session_state.selected_disease = st.selectbox(
-        "Eye Condition",
-        ["None", "Cataracts", "Glaucoma", "AMD", "Dry Eye", "Conjunctivitis"],
-        index=["None", "Cataracts", "Glaucoma", "AMD", "Dry Eye", "Conjunctivitis"].index(st.session_state.selected_disease)
-    )
-
-    st.session_state.severity = st.selectbox(
-        "Eye Condition Severity",
-        ["Mild", "Moderate", "Severe", "Very Severe"],
-        index=["Mild", "Moderate", "Severe", "Very Severe"].index(st.session_state.severity)
-    )
-
     st.session_state.prescription = st.text_input("Prescription", value=st.session_state.prescription)
 
     if st.button("🪼 Reset Chat"):
         st.session_state.messages = []
-        st.session_state.selected_disease = "None"
-        st.session_state.severity = "Mild"
         st.session_state.prescription = ""
         st.rerun()
 
@@ -144,8 +126,6 @@ if user_input:
     })
 
     system_context = ""
-    if st.session_state.selected_disease != "None":
-        system_context += f"Patient has been diagnosed with {st.session_state.selected_disease}, severity: {st.session_state.severity}. "
     if st.session_state.prescription:
         system_context += f"Patient prescription: {st.session_state.prescription}. "
 
@@ -157,8 +137,8 @@ if user_input:
 
     lambda_payload = {
         "prompt": prompt,
-        "max_tokens_to_sample": 200,
-        "temperature": 0.1,
+        "max_tokens": 200,
+        "temperature": 0.2,
         "top_k": 250,
         "top_p": 1,
         "stop_sequences": ["\n\nHuman:"]
@@ -166,7 +146,7 @@ if user_input:
 
     try:
         response = lambda_client.invoke(
-            FunctionName='BedrockLambdaStack-ChatLambda59BC07ED-bB4ACOZYc1VQ',
+            FunctionName='NovaProLambdaFunctionName',  # <-- Replace with your actual function name
             InvocationType='RequestResponse',
             Payload=json.dumps(lambda_payload)
         )
@@ -200,7 +180,7 @@ if st.button("End Conversation"):
 
     summary_payload = {
         "text": full_chat,
-        "max_tokens_to_sample": 150,
+        "max_tokens": 150,
         "temperature": 0.3,
         "top_k": 250,
         "top_p": 1
