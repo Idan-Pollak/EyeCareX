@@ -126,7 +126,7 @@ if st.session_state.prescription and not st.session_state.prescription_explained
     prompt = (
         f"Help me explain this optometry diagnosis to a patient with no optometry knowledge. "
         f"The diagnosis is: {st.session_state.prescription}. "
-        f"After explaining, ask the patient if they have any follow-up questions."
+        f"After explaining, ask the patient if they have any follow-up questions.\n\nAssistant:"
     )
 
     lambda_payload = {
