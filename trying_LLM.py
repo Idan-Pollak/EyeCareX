@@ -140,7 +140,7 @@ if st.session_state.prescription and not st.session_state.prescription_explained
 
     try:
         response = lambda_client.invoke(
-            FunctionName='lambda',  
+            FunctionName='BedrockLambdaStack-SummaryLambdaF6C7BDD0-bJ1no1BrtAbH',  
             InvocationType='RequestResponse',
             Payload=json.dumps(lambda_payload)
         )
@@ -185,7 +185,7 @@ if user_input:
 
     try:
         response = lambda_client.invoke(
-            FunctionName='lambda',  
+            FunctionName='BedrockLambdaStack-SummaryLambdaF6C7BDD0-bJ1no1BrtAbH',  
             InvocationType='RequestResponse',
             Payload=json.dumps(lambda_payload)
         )
