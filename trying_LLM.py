@@ -103,12 +103,12 @@ with col1:
 with col2:
     st.subheader("Doctor's Prescription")
     new_prescription = st.text_area(
-        "Enter diagnosis (e.g. DES OU):",
+        "Enter patient diagnosis:",
         value=st.session_state.prescription,
         height=150
     )
 
-    if st.button("🪼 Reset Chat"):
+    if st.button("Reset Chat"):
         st.session_state.messages = []
         st.session_state.prescription = ""
         st.session_state.prescription_explained = False
