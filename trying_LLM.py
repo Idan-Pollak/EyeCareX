@@ -140,7 +140,7 @@ if st.session_state.prescription and not st.session_state.prescription_explained
 
     try:
         response = lambda_client.invoke(
-            FunctionName='NovaProLambdaFunctionName',  # <-- Replace with your actual Lambda name
+            FunctionName='lambda',  
             InvocationType='RequestResponse',
             Payload=json.dumps(lambda_payload)
         )
@@ -185,7 +185,7 @@ if user_input:
 
     try:
         response = lambda_client.invoke(
-            FunctionName='NovaProLambdaFunctionName',  # <-- Replace with your actual Lambda name
+            FunctionName='lambda',  
             InvocationType='RequestResponse',
             Payload=json.dumps(lambda_payload)
         )
