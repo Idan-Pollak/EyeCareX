@@ -124,10 +124,11 @@ if new_prescription.strip() and new_prescription != st.session_state.prescriptio
 # --- Initial Explanation of Prescription ---
 if st.session_state.prescription and not st.session_state.prescription_explained:
     prompt = (
-        f"Human: Help me explain this optometry diagnosis to a patient with no optometry knowledge. "
-        f"The diagnosis is: {st.session_state.prescription}. "
-        f"After explaining, ask the patient if they have any follow-up questions.\n\nAssistant:"
+    f"Human: Help me explain this optometry diagnosis to a patient with no optometry knowledge. "
+    f"The diagnosis is: {st.session_state.prescription}. "
+    f"After explaining, ask the patient if they have any follow-up questions.\n\nAssistant:"
     )
+
 
     lambda_payload = {
         "prompt": prompt,
