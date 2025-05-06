@@ -3,7 +3,7 @@ import boto3
 import json
 from datetime import datetime
 
-# Page config
+# --- Page config ---
 st.set_page_config(page_title="Eyecare X Chatbot", layout="wide")
 
 # --- Password Gate ---
@@ -33,6 +33,8 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "prescription" not in st.session_state:
     st.session_state.prescription = ""
+if "prescription_explained" not in st.session_state:
+    st.session_state.prescription_explained = False
 
 # --- CSS Styles ---
 st.markdown("""
@@ -45,15 +47,6 @@ st.markdown("""
         padding: 20px;
         border-radius: 10px;
         margin-bottom: 20px;
-    }
-    .chat-box {
-        background-color: white;
-        border-radius: 10px;
-        padding: 20px;
-        height: 500px;
-        overflow-y: auto;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        margin-bottom: 10px;
     }
     .message {
         padding: 10px;
@@ -80,7 +73,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- Layout: Chat Center - Sidebar Right ---
+# --- Layout ---
 col1, col2 = st.columns([3, 1])
 
 # --- Chat Section ---
@@ -90,7 +83,7 @@ with col1:
     if not st.session_state.messages:
         st.markdown("""
         <div class="message assistant-message">
-            Hello! I'm your Eyecare X Assistant. How can I help you today?
+            Hello! I'm your Eyecare X Assistant. Once the doctor enters your diagnosis, I'll help explain it.
             <div class="message-time">Today</div>
         </div>
         """, unsafe_allow_html=True)
@@ -104,14 +97,13 @@ with col1:
         </div>
         """, unsafe_allow_html=True)
 
-    user_input = st.chat_input("Type your message and press Enter")
+    user_input = st.chat_input("Ask a follow-up question...")
 
-# --- Sidebar Section (Updated) ---
+# --- Sidebar Section ---
 with col2:
     st.subheader("Doctor's Prescription")
-
-    st.session_state.prescription = st.text_area(
-        "Enter doctor's notes or prescription:",
+    new_prescription = st.text_area(
+        "Enter diagnosis (e.g. DES OU):",
         value=st.session_state.prescription,
         height=150
     )
@@ -119,9 +111,55 @@ with col2:
     if st.button("🪼 Reset Chat"):
         st.session_state.messages = []
         st.session_state.prescription = ""
+        st.session_state.prescription_explained = False
         st.rerun()
 
-# --- Process Input ---
+# --- Update and explain prescription ---
+if new_prescription.strip() and new_prescription != st.session_state.prescription:
+    st.session_state.prescription = new_prescription
+    st.session_state.messages = []
+    st.session_state.prescription_explained = False
+    st.rerun()
+
+# --- Initial Explanation of Prescription ---
+if st.session_state.prescription and not st.session_state.prescription_explained:
+    prompt = (
+        f"Help me explain this optometry diagnosis to a patient with no optometry knowledge. "
+        f"The diagnosis is: {st.session_state.prescription}. "
+        f"After explaining, ask the patient if they have any follow-up questions."
+    )
+
+    lambda_payload = {
+        "prompt": prompt,
+        "max_tokens": 250,
+        "temperature": 0.3,
+        "top_k": 250,
+        "top_p": 1,
+        "stop_sequences": ["\n\nHuman:"]
+    }
+
+    try:
+        response = lambda_client.invoke(
+            FunctionName='NovaProLambdaFunctionName',  # <-- Replace with your actual Lambda name
+            InvocationType='RequestResponse',
+            Payload=json.dumps(lambda_payload)
+        )
+        response_payload = json.loads(response['Payload'].read())
+        if response_payload.get("statusCode") == 200:
+            output = json.loads(response_payload['body'])['completion']
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": output,
+                "time": datetime.now().strftime("%H:%M")
+            })
+            st.session_state.prescription_explained = True
+            st.rerun()
+        else:
+            st.error(f"Lambda error: {response_payload.get('body', 'Unknown error')}")
+    except Exception as e:
+        st.error(f"Error: {str(e)}")
+
+# --- Handle Patient Follow-up ---
 if user_input:
     st.session_state.messages.append({
         "role": "user",
@@ -129,11 +167,8 @@ if user_input:
         "time": datetime.now().strftime("%H:%M")
     })
 
-    system_context = ""
-    if st.session_state.prescription:
-        system_context += f"Patient prescription: {st.session_state.prescription}. "
-
-    prompt = f"{system_context}\n\n"
+    # Construct the chat prompt
+    prompt = ""
     for msg in st.session_state.messages:
         role = "Human" if msg["role"] == "user" else "Assistant"
         prompt += f"{role}: {msg['content']}\n\n"
@@ -142,7 +177,7 @@ if user_input:
     lambda_payload = {
         "prompt": prompt,
         "max_tokens": 200,
-        "temperature": 0.2,
+        "temperature": 0.3,
         "top_k": 250,
         "top_p": 1,
         "stop_sequences": ["\n\nHuman:"]
@@ -150,61 +185,22 @@ if user_input:
 
     try:
         response = lambda_client.invoke(
-            FunctionName='NovaProLambdaFunctionName',  # <-- Replace with your actual function name
+            FunctionName='NovaProLambdaFunctionName',  # <-- Replace with your actual Lambda name
             InvocationType='RequestResponse',
             Payload=json.dumps(lambda_payload)
         )
 
         response_payload = json.loads(response['Payload'].read())
-        if response_payload.get('statusCode') == 200:
+        if response_payload.get("statusCode") == 200:
             output = json.loads(response_payload['body'])['completion']
-
-            sentences = output.split(". ")
-            output = ". ".join(sentences[:5]) + ("." if len(sentences) > 5 else "")
-
             st.session_state.messages.append({
                 "role": "assistant",
                 "content": output,
                 "time": datetime.now().strftime("%H:%M")
             })
+            st.rerun()
         else:
             st.error(f"Lambda Error: {response_payload.get('body', 'Unknown error')}")
 
-        st.rerun()
-
     except Exception as e:
         st.error(f"Error: {str(e)}")
-
-# --- End Conversation + Doctor Summary ---
-if st.button("End Conversation"):
-    full_chat = ""
-    for msg in st.session_state.messages:
-        role = "Human" if msg["role"] == "user" else "Assistant"
-        full_chat += f"{role}: {msg['content']}\n\n"
-
-    summary_payload = {
-        "text": full_chat,
-        "max_tokens": 150,
-        "temperature": 0.3,
-        "top_k": 250,
-        "top_p": 1
-    }
-
-    try:
-        summary_response = lambda_client.invoke(
-            FunctionName='BedrockLambdaStack-SummaryLambdaF6C7BDD0-bJ1no1BrtAbH',
-            InvocationType='RequestResponse',
-            Payload=json.dumps(summary_payload)
-        )
-
-        summary_payload = json.loads(summary_response['Payload'].read())
-        if summary_payload.get('statusCode') == 200:
-            summary_text = json.loads(summary_payload['body'])['summary']
-
-            st.subheader("Doctor Summary Preview")
-            st.write(summary_text)
-        else:
-            st.error(f"Lambda Error: {summary_payload.get('body', 'Unknown error')}")
-
-    except Exception as e:
-        st.error(f"Error generating summary: {str(e)}")
