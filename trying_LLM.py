@@ -76,6 +76,14 @@ st.markdown("""
 # --- Layout ---
 col1, col2 = st.columns([3, 1])
 
+# --- Helper function ---
+def format_prompt(messages):
+    prompt = ""
+    for msg in messages:
+        role = "Human" if msg["role"] == "user" else "Assistant"
+        prompt += f"{role}: {msg['content']}\n\n"
+    return prompt + "Assistant:"
+
 # --- Chat Section ---
 with col1:
     st.markdown('<div class="header">Eyecare X Chat Assistant</div>', unsafe_allow_html=True)
@@ -123,16 +131,14 @@ if new_prescription.strip() and new_prescription != st.session_state.prescriptio
 
 # --- Initial Explanation of Prescription ---
 if st.session_state.prescription and not st.session_state.prescription_explained:
-    prompt = (
-    f"Human: Help me explain this optometry diagnosis to a patient with no optometry knowledge. "
-    f"The diagnosis is: {st.session_state.prescription}. "
-    f"After explaining, ask the patient if they have any follow-up questions"
+    initial_prompt = (
+        f"Human: Help me explain this optometry diagnosis to a patient with no optometry knowledge. "
+        f"The diagnosis is: {st.session_state.prescription}. "
+        f"After explaining, ask the patient if they have any follow-up questions.\n\nAssistant:"
     )
-    prompt += "\n\nAssistant:"
-
 
     lambda_payload = {
-        "prompt": prompt,
+        "prompt": initial_prompt,
         "max_tokens": 250,
         "temperature": 0.3,
         "top_k": 250,
@@ -142,11 +148,12 @@ if st.session_state.prescription and not st.session_state.prescription_explained
 
     try:
         response = lambda_client.invoke(
-            FunctionName='BedrockLambdaStack-SummaryLambdaF6C7BDD0-bJ1no1BrtAbH',  
+            FunctionName='BedrockLambdaStack-SummaryLambdaF6C7BDD0-bJ1no1BrtAbH',
             InvocationType='RequestResponse',
             Payload=json.dumps(lambda_payload)
         )
         response_payload = json.loads(response['Payload'].read())
+
         if response_payload.get("statusCode") == 200:
             output = json.loads(response_payload['body'])['completion']
             st.session_state.messages.append({
@@ -158,6 +165,7 @@ if st.session_state.prescription and not st.session_state.prescription_explained
             st.rerun()
         else:
             st.error(f"Lambda error: {response_payload.get('body', 'Unknown error')}")
+
     except Exception as e:
         st.error(f"Error: {str(e)}")
 
@@ -169,12 +177,7 @@ if user_input:
         "time": datetime.now().strftime("%H:%M")
     })
 
-    # Construct the chat prompt
-    prompt = ""
-    for msg in st.session_state.messages:
-        role = "Human" if msg["role"] == "user" else "Assistant"
-        prompt += f"{role}: {msg['content']}\n\n"
-    prompt += "Assistant:"
+    prompt = format_prompt(st.session_state.messages)
 
     lambda_payload = {
         "prompt": prompt,
@@ -187,7 +190,7 @@ if user_input:
 
     try:
         response = lambda_client.invoke(
-            FunctionName='BedrockLambdaStack-SummaryLambdaF6C7BDD0-bJ1no1BrtAbH',  
+            FunctionName='BedrockLambdaStack-SummaryLambdaF6C7BDD0-bJ1no1BrtAbH',
             InvocationType='RequestResponse',
             Payload=json.dumps(lambda_payload)
         )
