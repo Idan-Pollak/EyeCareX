@@ -76,13 +76,14 @@ st.markdown("""
 # --- Layout ---
 col1, col2 = st.columns([3, 1])
 
-# --- Helper function ---
+# --- Helper function to build prompt safely ---
 def format_prompt(messages):
-    prompt = ""
+    prompt_parts = []
     for msg in messages:
         role = "Human" if msg["role"] == "user" else "Assistant"
-        prompt += f"{role}: {msg['content']}\n\n"
-    return prompt + "Assistant:"
+        prompt_parts.append(f"{role}: {msg['content'].strip()}")
+    prompt = "\n\n".join(prompt_parts).strip()
+    return prompt + "\n\nAssistant:"
 
 # --- Chat Section ---
 with col1:
@@ -131,14 +132,16 @@ if new_prescription.strip() and new_prescription != st.session_state.prescriptio
 
 # --- Initial Explanation of Prescription ---
 if st.session_state.prescription and not st.session_state.prescription_explained:
-    initial_prompt = (
-        f"Human: Help me explain this optometry diagnosis to a patient with no optometry knowledge. "
-        f"The diagnosis is: {st.session_state.prescription}. "
-        f"After explaining, ask the patient if they have any follow-up questions.\n\nAssistant:"
-    )
+    initial_message = {
+        "role": "user",
+        "content": f"Help me explain this optometry diagnosis to a patient with no optometry knowledge. "
+                   f"The diagnosis is: {st.session_state.prescription.strip()}. "
+                   f"After explaining, ask the patient if they have any follow-up questions."
+    }
+    prompt = format_prompt([initial_message])
 
     lambda_payload = {
-        "prompt": initial_prompt,
+        "prompt": prompt,
         "max_tokens": 250,
         "temperature": 0.3,
         "top_k": 250,
