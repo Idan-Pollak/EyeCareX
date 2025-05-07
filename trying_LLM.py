@@ -76,15 +76,6 @@ st.markdown("""
 # --- Layout ---
 col1, col2 = st.columns([3, 1])
 
-# --- Helper function to build prompt safely ---
-def format_prompt(messages):
-    prompt_parts = []
-    for msg in messages:
-        role = "Human" if msg["role"] == "user" else "Assistant"
-        prompt_parts.append(f"{role}: {msg['content'].strip()}")
-    prompt = "\n\n".join(prompt_parts).strip()
-    return prompt + "\n\nAssistant:"
-
 # --- Chat Section ---
 with col1:
     st.markdown('<div class="header">Eyecare X Chat Assistant</div>', unsafe_allow_html=True)
@@ -132,13 +123,12 @@ if new_prescription.strip() and new_prescription != st.session_state.prescriptio
 
 # --- Initial Explanation of Prescription ---
 if st.session_state.prescription and not st.session_state.prescription_explained:
-    initial_message = {
-        "role": "user",
-        "content": f"Help me explain this optometry diagnosis to a patient with no optometry knowledge. "
-                   f"The diagnosis is: {st.session_state.prescription.strip()}. "
-                   f"After explaining, ask the patient if they have any follow-up questions."
-    }
-    prompt = format_prompt([initial_message])
+    prescription_text = st.session_state.prescription.strip()
+    prompt = (
+        f"Human: Help me explain this optometry diagnosis to a patient with no optometry knowledge. "
+        f"The diagnosis is: {prescription_text}. "
+        f"After explaining, ask the patient if they have any follow-up questions.\n\nAssistant:"
+    )
 
     lambda_payload = {
         "prompt": prompt,
@@ -180,7 +170,13 @@ if user_input:
         "time": datetime.now().strftime("%H:%M")
     })
 
-    prompt = format_prompt(st.session_state.messages)
+    # Build chat history prompt manually
+    prompt = ""
+    for msg in st.session_state.messages:
+        role = "Human" if msg["role"] == "user" else "Assistant"
+        content = msg["content"].strip()
+        prompt += f"{role}: {content}\n\n"
+    prompt += "Assistant:"
 
     lambda_payload = {
         "prompt": prompt,
