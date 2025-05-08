@@ -144,7 +144,7 @@
                       "s3Bucket": {
                         "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
                       },
-                      "s3Key": "bc25094d5233171902874108c3aeb180836d2747a24457245bc9b1f6823d3ccb.zip"
+                      "s3Key": "4e8664ed7191643266266eee408a9970e224e32274ba6ffb7a4cdbcf2d470674.zip"
                     },
                     "handler": "bedrock_handler.chat_handler",
                     "memorySize": 256,
@@ -209,7 +209,7 @@
                       "s3Bucket": {
                         "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
                       },
-                      "s3Key": "bc25094d5233171902874108c3aeb180836d2747a24457245bc9b1f6823d3ccb.zip"
+                      "s3Key": "4e8664ed7191643266266eee408a9970e224e32274ba6ffb7a4cdbcf2d470674.zip"
                     },
                     "handler": "bedrock_handler.summary_handler",
                     "memorySize": 256,
