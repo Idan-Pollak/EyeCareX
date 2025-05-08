@@ -199,16 +199,25 @@ if user_input:
         )
 
         response_payload = json.loads(response['Payload'].read())
+        print("DEBUG - Lambda Response:", response_payload)  # Debug print
+        
         if response_payload.get("statusCode") == 200:
-            output = json.loads(response_payload['body'])['completion']
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": output,
-                "time": datetime.now().strftime("%H:%M")
-            })
-            st.rerun()
+            body = json.loads(response_payload['body'])
+            print("DEBUG - Response Body:", body)  # Debug print
+            
+            if 'completion' in body:
+                output = body['completion']
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": output,
+                    "time": datetime.now().strftime("%H:%M")
+                })
+                st.rerun()
+            else:
+                st.error(f"Unexpected response format. Response body: {body}")
         else:
             st.error(f"Lambda Error: {response_payload.get('body', 'Unknown error')}")
 
     except Exception as e:
         st.error(f"Error: {str(e)}")
+        print("DEBUG - Full error:", str(e))  # Debug print
