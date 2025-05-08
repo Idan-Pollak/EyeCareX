@@ -77,18 +77,20 @@ def summary_handler(event, context):
         
         # Prepare Bedrock request
         body = {
-            "prompt": prompt,
-            "max_tokens_to_sample": max_tokens,
-            "temperature": temperature,
-            "top_k": top_k,
-            "top_p": top_p,
-            "stop_sequences": ["\n\nHuman:"]
+            "inputText": prompt,
+            "textGenerationConfig": {
+                "maxTokenCount": max_tokens,
+                "temperature": temperature,
+                "topP": top_p,
+                "stopSequences": []
+            }
         }
         
+
         # Call Bedrock
         response = bedrock.invoke_model(
             body=json.dumps(body),
-            modelId="anthropic.claude-v2",
+            modelId="amazon.titan-text-premier-v1:0",
             accept='application/json',
             contentType='application/json'
         )

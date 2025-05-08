@@ -141,7 +141,7 @@ if st.session_state.prescription and not st.session_state.prescription_explained
 
     try:
         response = lambda_client.invoke(
-            FunctionName='BedrockLambdaStack-SummaryLambdaF6C7BDD0-bJ1no1BrtAbH',
+            FunctionName='BedrockLambdaStack-EducationChatLambda8A98495D-bgJljCsKtrzd',
             InvocationType='RequestResponse',
             Payload=json.dumps(lambda_payload)
         )
@@ -176,8 +176,12 @@ if user_input:
         role = "Human" if msg["role"] == "user" else "Assistant"
         content = msg["content"].strip()
         prompt += f"{role}: {content}\n\n"
-    prompt += "Assistant:"
-
+    prompt = prompt.rstrip() + "\n\nAssistant:"  # Ensure exactly one "\n\nAssistant:" at the end
+    
+    # Debug logging
+    print("DEBUG - Prompt being sent to Lambda:")
+    print(repr(prompt))  # Using repr to see exact string representation including newlines
+    
     lambda_payload = {
         "prompt": prompt,
         "max_tokens": 200,
@@ -189,7 +193,7 @@ if user_input:
 
     try:
         response = lambda_client.invoke(
-            FunctionName='BedrockLambdaStack-SummaryLambdaF6C7BDD0-bJ1no1BrtAbH',
+            FunctionName='BedrockLambdaStack-EducationSummaryLambda582B0D4E-swSGPEgoNlEg',
             InvocationType='RequestResponse',
             Payload=json.dumps(lambda_payload)
         )
