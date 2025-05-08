@@ -12,7 +12,7 @@ def chat_handler(event, context):
         
         # Extract parameters from event
         prompt = event.get('prompt')
-        max_tokens = event.get('max_tokens_to_sample', 200)
+        max_tokens = event.get('max_tokens_to_sample', 1000)
         temperature = event.get('temperature', 0.1)
         top_k = event.get('top_k', 250)
         top_p = event.get('top_p', 1)
@@ -64,7 +64,7 @@ def summary_handler(event, context):
         
         # Extract parameters from event
         text = event.get('text')
-        max_tokens = event.get('max_tokens_to_sample', 500)
+        max_tokens = event.get('max_tokens_to_sample', 1000)
         temperature = event.get('temperature', 0.3)
         top_k = event.get('top_k', 250)
         top_p = event.get('top_p', 1)
@@ -96,7 +96,8 @@ def summary_handler(event, context):
         )
         
         # Parse and return response
-        output = json.loads(response['body'].read())["completion"].strip()
+        response_body = json.loads(response['body'].read())
+        output = response_body.get('completion', response_body.get('outputText', '')).strip()
         
         return {
             'statusCode': 200,
