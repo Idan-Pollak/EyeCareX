@@ -101,7 +101,7 @@ with col1:
 
 # --- Sidebar Section ---
 with col2:
-    st.subheader("Doctor's Prescription")
+    st.subheader("Doctor's Diagnosis")
     new_prescription = st.text_area(
         "Enter patient diagnosis:",
         value=st.session_state.prescription,
@@ -125,9 +125,9 @@ if new_prescription.strip() and new_prescription != st.session_state.prescriptio
 if st.session_state.prescription and not st.session_state.prescription_explained:
     prescription_text = st.session_state.prescription.strip()
     prompt = (
-        f"Human: Help me explain this optometry diagnosis to a patient with no optometry knowledge. "
+        f"You are an optometist who is explaining a diagnosis to a patient with no optometry knowledge. "
         f"The diagnosis is: {prescription_text}. "
-        f"After explaining, ask the patient if they have any follow-up questions.\n\nAssistant:"
+        f"After explaining, ask the patient if they have any follow-up questions"
     )
 
     lambda_payload = {
@@ -193,7 +193,7 @@ if user_input:
 
     try:
         response = lambda_client.invoke(
-            FunctionName='BedrockLambdaStack-EducationSummaryLambda582B0D4E-swSGPEgoNlEg',
+            FunctionName='BedrockLambdaStack-EducationChatLambda8A98495D-bgJljCsKtrzd',
             InvocationType='RequestResponse',
             Payload=json.dumps(lambda_payload)
         )

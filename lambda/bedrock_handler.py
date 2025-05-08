@@ -97,7 +97,21 @@ def summary_handler(event, context):
         
         # Parse and return response
         response_body = json.loads(response['body'].read())
-        output = response_body.get('completion', response_body.get('outputText', '')).strip()
+        print("Debug - Full response body:", json.dumps(response_body))
+        
+        # Try to get the output text with multiple possible paths
+        output = None
+        if 'results' in response_body and response_body['results']:
+            output = response_body['results'][0].get('outputText', '')
+        elif 'completion' in response_body:
+            output = response_body['completion']
+        elif 'outputText' in response_body:
+            output = response_body['outputText']
+        
+        if output is None:
+            raise Exception(f"Could not find output in response: {json.dumps(response_body)}")
+            
+        output = output.strip()
         
         return {
             'statusCode': 200,
