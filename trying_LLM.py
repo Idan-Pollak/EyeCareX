@@ -125,9 +125,10 @@ if new_prescription.strip() and new_prescription != st.session_state.prescriptio
 if st.session_state.prescription and not st.session_state.prescription_explained:
     prescription_text = st.session_state.prescription.strip()
     prompt = (
-        f"You are an optometist who is explaining a diagnosis to a patient with no optometry knowledge. "
-        f"The diagnosis is: {prescription_text}. "
-        f"After explaining, ask the patient if they have any follow-up questions"
+        "You are an optometist who is explaining a diagnosis to a patient with no optometry knowledge.\n\n"
+        "Human: Please explain the following diagnosis in simple terms and ask if the patient has any questions: "
+        f"{prescription_text}\n\n"
+        "Assistant:"
     )
 
     lambda_payload = {
@@ -171,12 +172,12 @@ if user_input:
     })
 
     # Build chat history prompt manually
-    prompt = ""
+    prompt = "\n\nHuman: "  # Start with required prefix
     for msg in st.session_state.messages:
         role = "Human" if msg["role"] == "user" else "Assistant"
         content = msg["content"].strip()
-        prompt += f"{role}: {content}\n\n"
-    prompt = prompt.rstrip() + "\n\nAssistant:"  # Ensure exactly one "\n\nAssistant:" at the end
+        prompt += f"{content}\n\n{role}: "
+    prompt = prompt.rstrip("Human: ") + "Assistant:"  # Ensure proper ending
     
     # Debug logging
     print("DEBUG - Prompt being sent to Lambda:")
@@ -199,25 +200,16 @@ if user_input:
         )
 
         response_payload = json.loads(response['Payload'].read())
-        print("DEBUG - Lambda Response:", response_payload)  # Debug print
-        
         if response_payload.get("statusCode") == 200:
-            body = json.loads(response_payload['body'])
-            print("DEBUG - Response Body:", body)  # Debug print
-            
-            if 'completion' in body:
-                output = body['completion']
-                st.session_state.messages.append({
-                    "role": "assistant",
-                    "content": output,
-                    "time": datetime.now().strftime("%H:%M")
-                })
-                st.rerun()
-            else:
-                st.error(f"Unexpected response format. Response body: {body}")
+            output = json.loads(response_payload['body'])['completion']
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": output,
+                "time": datetime.now().strftime("%H:%M")
+            })
+            st.rerun()
         else:
             st.error(f"Lambda Error: {response_payload.get('body', 'Unknown error')}")
 
     except Exception as e:
         st.error(f"Error: {str(e)}")
-        print("DEBUG - Full error:", str(e))  # Debug print
