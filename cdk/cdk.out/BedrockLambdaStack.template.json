@@ -58,14 +58,14 @@
     "aws:cdk:path": "BedrockLambdaStack/BedrockLambdaRole/DefaultPolicy/Resource"
    }
   },
-  "ChatLambda59BC07ED": {
+  "EducationChatLambda8A98495D": {
    "Type": "AWS::Lambda::Function",
    "Properties": {
     "Code": {
      "S3Bucket": {
       "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
      },
-     "S3Key": "060d20a8606485300d716819aed82956dd60139d2846a5dd5eab4ad0ef8707d6.zip"
+     "S3Key": "bc25094d5233171902874108c3aeb180836d2747a24457245bc9b1f6823d3ccb.zip"
     },
     "Handler": "bedrock_handler.chat_handler",
     "MemorySize": 256,
@@ -83,20 +83,20 @@
     "BedrockLambdaRole5231C31F"
    ],
    "Metadata": {
-    "aws:cdk:path": "BedrockLambdaStack/ChatLambda/Resource",
-    "aws:asset:path": "asset.060d20a8606485300d716819aed82956dd60139d2846a5dd5eab4ad0ef8707d6",
+    "aws:cdk:path": "BedrockLambdaStack/EducationChatLambda/Resource",
+    "aws:asset:path": "asset.bc25094d5233171902874108c3aeb180836d2747a24457245bc9b1f6823d3ccb",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
   },
-  "SummaryLambdaF6C7BDD0": {
+  "EducationSummaryLambda582B0D4E": {
    "Type": "AWS::Lambda::Function",
    "Properties": {
     "Code": {
      "S3Bucket": {
       "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
      },
-     "S3Key": "060d20a8606485300d716819aed82956dd60139d2846a5dd5eab4ad0ef8707d6.zip"
+     "S3Key": "bc25094d5233171902874108c3aeb180836d2747a24457245bc9b1f6823d3ccb.zip"
     },
     "Handler": "bedrock_handler.summary_handler",
     "MemorySize": 256,
@@ -114,8 +114,8 @@
     "BedrockLambdaRole5231C31F"
    ],
    "Metadata": {
-    "aws:cdk:path": "BedrockLambdaStack/SummaryLambda/Resource",
-    "aws:asset:path": "asset.060d20a8606485300d716819aed82956dd60139d2846a5dd5eab4ad0ef8707d6",
+    "aws:cdk:path": "BedrockLambdaStack/EducationSummaryLambda/Resource",
+    "aws:asset:path": "asset.bc25094d5233171902874108c3aeb180836d2747a24457245bc9b1f6823d3ccb",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }

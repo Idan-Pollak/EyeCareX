@@ -104,17 +104,17 @@
               "version": "2.164.1"
             }
           },
-          "ChatLambda": {
-            "id": "ChatLambda",
-            "path": "BedrockLambdaStack/ChatLambda",
+          "EducationChatLambda": {
+            "id": "EducationChatLambda",
+            "path": "BedrockLambdaStack/EducationChatLambda",
             "children": {
               "Code": {
                 "id": "Code",
-                "path": "BedrockLambdaStack/ChatLambda/Code",
+                "path": "BedrockLambdaStack/EducationChatLambda/Code",
                 "children": {
                   "Stage": {
                     "id": "Stage",
-                    "path": "BedrockLambdaStack/ChatLambda/Code/Stage",
+                    "path": "BedrockLambdaStack/EducationChatLambda/Code/Stage",
                     "constructInfo": {
                       "fqn": "aws-cdk-lib.AssetStaging",
                       "version": "2.164.1"
@@ -122,7 +122,7 @@
                   },
                   "AssetBucket": {
                     "id": "AssetBucket",
-                    "path": "BedrockLambdaStack/ChatLambda/Code/AssetBucket",
+                    "path": "BedrockLambdaStack/EducationChatLambda/Code/AssetBucket",
                     "constructInfo": {
                       "fqn": "aws-cdk-lib.aws_s3.BucketBase",
                       "version": "2.164.1"
@@ -136,7 +136,7 @@
               },
               "Resource": {
                 "id": "Resource",
-                "path": "BedrockLambdaStack/ChatLambda/Resource",
+                "path": "BedrockLambdaStack/EducationChatLambda/Resource",
                 "attributes": {
                   "aws:cdk:cloudformation:type": "AWS::Lambda::Function",
                   "aws:cdk:cloudformation:props": {
@@ -144,7 +144,7 @@
                       "s3Bucket": {
                         "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
                       },
-                      "s3Key": "060d20a8606485300d716819aed82956dd60139d2846a5dd5eab4ad0ef8707d6.zip"
+                      "s3Key": "bc25094d5233171902874108c3aeb180836d2747a24457245bc9b1f6823d3ccb.zip"
                     },
                     "handler": "bedrock_handler.chat_handler",
                     "memorySize": 256,
@@ -169,17 +169,17 @@
               "version": "2.164.1"
             }
           },
-          "SummaryLambda": {
-            "id": "SummaryLambda",
-            "path": "BedrockLambdaStack/SummaryLambda",
+          "EducationSummaryLambda": {
+            "id": "EducationSummaryLambda",
+            "path": "BedrockLambdaStack/EducationSummaryLambda",
             "children": {
               "Code": {
                 "id": "Code",
-                "path": "BedrockLambdaStack/SummaryLambda/Code",
+                "path": "BedrockLambdaStack/EducationSummaryLambda/Code",
                 "children": {
                   "Stage": {
                     "id": "Stage",
-                    "path": "BedrockLambdaStack/SummaryLambda/Code/Stage",
+                    "path": "BedrockLambdaStack/EducationSummaryLambda/Code/Stage",
                     "constructInfo": {
                       "fqn": "aws-cdk-lib.AssetStaging",
                       "version": "2.164.1"
@@ -187,7 +187,7 @@
                   },
                   "AssetBucket": {
                     "id": "AssetBucket",
-                    "path": "BedrockLambdaStack/SummaryLambda/Code/AssetBucket",
+                    "path": "BedrockLambdaStack/EducationSummaryLambda/Code/AssetBucket",
                     "constructInfo": {
                       "fqn": "aws-cdk-lib.aws_s3.BucketBase",
                       "version": "2.164.1"
@@ -201,7 +201,7 @@
               },
               "Resource": {
                 "id": "Resource",
-                "path": "BedrockLambdaStack/SummaryLambda/Resource",
+                "path": "BedrockLambdaStack/EducationSummaryLambda/Resource",
                 "attributes": {
                   "aws:cdk:cloudformation:type": "AWS::Lambda::Function",
                   "aws:cdk:cloudformation:props": {
@@ -209,7 +209,7 @@
                       "s3Bucket": {
                         "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
                       },
-                      "s3Key": "060d20a8606485300d716819aed82956dd60139d2846a5dd5eab4ad0ef8707d6.zip"
+                      "s3Key": "bc25094d5233171902874108c3aeb180836d2747a24457245bc9b1f6823d3ccb.zip"
                     },
                     "handler": "bedrock_handler.summary_handler",
                     "memorySize": 256,

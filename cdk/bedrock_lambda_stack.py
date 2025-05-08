@@ -33,7 +33,7 @@ class BedrockLambdaStack(Stack):
 
         # Create Chat Lambda function
         chat_lambda = _lambda.Function(
-            self, "ChatLambda",
+            self, "EducationChatLambda",
             runtime=_lambda.Runtime.PYTHON_3_9,
             handler="bedrock_handler.chat_handler",  # 👈 Chat handler
             code=_lambda.Code.from_asset(lambda_dir),
@@ -44,7 +44,7 @@ class BedrockLambdaStack(Stack):
 
         # Create Summary Lambda function
         summary_lambda = _lambda.Function(
-            self, "SummaryLambda",
+            self, "EducationSummaryLambda",
             runtime=_lambda.Runtime.PYTHON_3_9,
             handler="bedrock_handler.summary_handler",  # 👈 Summary handler
             code=_lambda.Code.from_asset(lambda_dir),
