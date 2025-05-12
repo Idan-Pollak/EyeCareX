@@ -33,6 +33,8 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "prescription" not in st.session_state:
     st.session_state.prescription = ""
+if "treatment_plan" not in st.session_state:
+    st.session_state.treatment_plan = ""
 if "prescription_explained" not in st.session_state:
     st.session_state.prescription_explained = False
 
@@ -108,15 +110,25 @@ with col2:
         height=150
     )
 
+    st.subheader("Patient Treatment Plan")
+    new_treatment_plan = st.text_area(
+        "Enter treatment plan (not shown to patient directly):",
+        value=st.session_state.treatment_plan,
+        height=150
+    )
+
     if st.button("Reset Chat"):
         st.session_state.messages = []
         st.session_state.prescription = ""
+        st.session_state.treatment_plan = ""
         st.session_state.prescription_explained = False
         st.rerun()
 
-# --- Update and explain prescription ---
-if new_prescription.strip() and new_prescription != st.session_state.prescription:
-    st.session_state.prescription = new_prescription
+# --- Update prescription or treatment plan ---
+if (new_prescription.strip() and new_prescription != st.session_state.prescription) or \
+   (new_treatment_plan.strip() != st.session_state.treatment_plan):
+    st.session_state.prescription = new_prescription.strip()
+    st.session_state.treatment_plan = new_treatment_plan.strip()
     st.session_state.messages = []
     st.session_state.prescription_explained = False
     st.rerun()
@@ -124,10 +136,12 @@ if new_prescription.strip() and new_prescription != st.session_state.prescriptio
 # --- Initial Explanation of Prescription ---
 if st.session_state.prescription and not st.session_state.prescription_explained:
     prescription_text = st.session_state.prescription.strip()
+    treatment_plan_text = st.session_state.treatment_plan.strip()
+
     prompt = (
-        "You are an optometist who is explaining a diagnosis to a patient with no optometry knowledge.\n\n"
-        "Human: Please explain the following diagnosis in simple terms and ask if the patient has any questions: "
-        f"{prescription_text}\n\n"
+        "You are an optometrist who is explaining a diagnosis to a patient with no optometry knowledge.\n\n"
+        f"Human: Please explain the following diagnosis in simple terms and ask if the patient has any questions: {prescription_text}\n"
+        f"Additional doctor notes: {treatment_plan_text}\n\n"
         "Assistant:"
     )
 
@@ -172,17 +186,13 @@ if user_input:
     })
 
     # Build chat history prompt manually
-    prompt = "\n\nHuman: "  # Start with required prefix
+    prompt = "\n\nHuman: "
     for msg in st.session_state.messages:
         role = "Human" if msg["role"] == "user" else "Assistant"
         content = msg["content"].strip()
         prompt += f"{content}\n\n{role}: "
-    prompt = prompt.rstrip("Human: ") + "Assistant:"  # Ensure proper ending
-    
-    # Debug logging
-    print("DEBUG - Prompt being sent to Lambda:")
-    print(repr(prompt))  # Using repr to see exact string representation including newlines
-    
+    prompt = prompt.rstrip("Human: ") + "Assistant:"
+
     lambda_payload = {
         "prompt": prompt,
         "max_tokens": 200,
