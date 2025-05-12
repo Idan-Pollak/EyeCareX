@@ -112,7 +112,7 @@ with col2:
 
     st.subheader("Patient Treatment Plan")
     new_treatment_plan = st.text_area(
-        "Enter treatment plan (not shown to patient directly):",
+        "Enter treatment plan:",
         value=st.session_state.treatment_plan,
         height=150
     )
