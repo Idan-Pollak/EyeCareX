@@ -78,6 +78,40 @@ st.markdown("""
 # --- Layout ---
 col1, col2 = st.columns([3, 1])
 
+# --- Sidebar Section ---
+with col2:
+    if st.button("Reset Chat"):
+        st.session_state.messages = []
+        st.session_state.prescription = ""
+        st.session_state.treatment_plan = ""
+        st.session_state.prescription_explained = False
+        st.rerun()
+
+    st.subheader("Doctor's Diagnosis")
+    new_prescription = st.text_area(
+        "Enter patient diagnosis:",
+        value=st.session_state.prescription,
+        height=150
+    )
+
+    st.subheader("Patient Treatment Plan")
+    new_treatment_plan = st.text_area(
+        "Enter treatment plan:",
+        value=st.session_state.treatment_plan,
+        height=150
+    )
+
+# --- Update prescription or treatment plan if changed ---
+if (
+    (new_prescription.strip() and new_prescription != st.session_state.prescription) or
+    (new_treatment_plan.strip() and new_treatment_plan != st.session_state.treatment_plan)
+):
+    st.session_state.prescription = new_prescription
+    st.session_state.treatment_plan = new_treatment_plan
+    st.session_state.messages = []
+    st.session_state.prescription_explained = False
+    st.rerun()
+
 # --- Chat Section ---
 with col1:
     st.markdown('<div class="header">Eyecare X Chat Assistant</div>', unsafe_allow_html=True)
@@ -85,7 +119,7 @@ with col1:
     if not st.session_state.messages:
         st.markdown("""
         <div class="message assistant-message">
-            Hello! I'm your Eyecare X Assistant. Once the doctor enters your diagnosis, I'll help explain it.
+            Hello! I'm your Eyecare X Assistant. Once the doctor enters your diagnosis and treatment plan, I'll help explain them.
             <div class="message-time">Today</div>
         </div>
         """, unsafe_allow_html=True)
@@ -101,47 +135,16 @@ with col1:
 
     user_input = st.chat_input("Ask a follow-up question...")
 
-# --- Sidebar Section ---
-with col2:
-    st.subheader("Doctor's Diagnosis")
-    new_prescription = st.text_area(
-        "Enter patient diagnosis:",
-        value=st.session_state.prescription,
-        height=150
-    )
-
-    st.subheader("Patient Treatment Plan")
-    new_treatment_plan = st.text_area(
-        "Enter treatment plan:",
-        value=st.session_state.treatment_plan,
-        height=150
-    )
-
-    if st.button("Reset Chat"):
-        st.session_state.messages = []
-        st.session_state.prescription = ""
-        st.session_state.treatment_plan = ""
-        st.session_state.prescription_explained = False
-        st.rerun()
-
-# --- Update prescription or treatment plan ---
-if (new_prescription.strip() and new_prescription != st.session_state.prescription) or \
-   (new_treatment_plan.strip() != st.session_state.treatment_plan):
-    st.session_state.prescription = new_prescription.strip()
-    st.session_state.treatment_plan = new_treatment_plan.strip()
-    st.session_state.messages = []
-    st.session_state.prescription_explained = False
-    st.rerun()
-
 # --- Initial Explanation of Prescription ---
 if st.session_state.prescription and not st.session_state.prescription_explained:
     prescription_text = st.session_state.prescription.strip()
-    treatment_plan_text = st.session_state.treatment_plan.strip()
+    treatment_text = st.session_state.treatment_plan.strip()
 
     prompt = (
-        "You are an optometrist who is explaining a diagnosis to a patient with no optometry knowledge.\n\n"
-        f"Human: Please explain the following diagnosis in simple terms and ask if the patient has any questions: {prescription_text}\n"
-        f"Additional doctor notes: {treatment_plan_text}\n\n"
+        "You are an optometrist explaining a diagnosis and treatment plan to a patient with no optometry knowledge.\n\n"
+        f"Diagnosis: {prescription_text}\n"
+        f"Treatment Plan: {treatment_text}\n\n"
+        "Please explain the above in simple terms and ask if the patient has any questions.\n\n"
         "Assistant:"
     )
 
@@ -185,13 +188,19 @@ if user_input:
         "time": datetime.now().strftime("%H:%M")
     })
 
-    # Build chat history prompt manually
-    prompt = "\n\nHuman: "
+    # Build chat history prompt with context
+    prompt = (
+        "You are an optometrist continuing a conversation with a patient.\n"
+        f"Context:\nDiagnosis: {st.session_state.prescription.strip()}\n"
+        f"Treatment Plan: {st.session_state.treatment_plan.strip()}\n\n"
+        "Conversation:\n\n"
+    )
+
     for msg in st.session_state.messages:
         role = "Human" if msg["role"] == "user" else "Assistant"
         content = msg["content"].strip()
-        prompt += f"{content}\n\n{role}: "
-    prompt = prompt.rstrip("Human: ") + "Assistant:"
+        prompt += f"{role}: {content}\n\n"
+    prompt += "Assistant:"
 
     lambda_payload = {
         "prompt": prompt,
