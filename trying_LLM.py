@@ -190,11 +190,13 @@ if user_input:
 
     # Build chat history prompt with context
     prompt = (
-        "You are an optometrist continuing a conversation with a patient. You must not speculate on any medical diagnoses, and do not make up facts. Stick strictly to the information provided in the diagnosis and treatment plan.\n"
-        f"Context:\nDiagnosis: {st.session_state.prescription.strip()}\n"
-        f"Treatment Plan: {st.session_state.treatment_plan.strip()}\n\n"
-        "Conversation:\n\n"
+        "\n\nHuman: You are an optometrist explaining a diagnosis and treatment plan to a patient with no optometry knowledge.\n"
+        f"Diagnosis: {prescription_text}\n"
+        f"Treatment Plan: {treatment_text}\n"
+        "Please explain the above in simple terms and ask if the patient has any questions.\n\n"
+        "Assistant:"
     )
+
 
     for msg in st.session_state.messages:
         role = "Human" if msg["role"] == "user" else "Assistant"
