@@ -190,7 +190,7 @@ if user_input:
 
     # Build chat history prompt with context
     prompt = (
-        "You are an optometrist continuing a conversation with a patient. "
+        "\n\nHuman:You are an optometrist continuing a conversation with a patient. "
         "You must not speculate or provide any medical advice beyond the provided diagnosis and treatment plan. "
         "If unsure, say 'I’m not certain — please consult your doctor.' "
         "Do not make up facts. Stick strictly to the information provided in the diagnosis and treatment plan. "
