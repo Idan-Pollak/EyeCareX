@@ -101,16 +101,18 @@ with col2:
         height=150
     )
 
-# --- Update prescription or treatment plan if changed ---
-if (
-    (new_prescription.strip() and new_prescription != st.session_state.prescription) or
-    (new_treatment_plan.strip() and new_treatment_plan != st.session_state.treatment_plan)
-):
-    st.session_state.prescription = new_prescription
-    st.session_state.treatment_plan = new_treatment_plan
-    st.session_state.messages = []
-    st.session_state.prescription_explained = False
-    st.rerun()
+    # --- Submit button to confirm both inputs ---
+    submit_inputs = st.button("Finish")
+
+    if submit_inputs:
+        if new_prescription.strip() and new_treatment_plan.strip():
+            st.session_state.prescription = new_prescription
+            st.session_state.treatment_plan = new_treatment_plan
+            st.session_state.messages = []
+            st.session_state.prescription_explained = False
+            st.rerun()
+        else:
+            st.warning("Please complete both the diagnosis and treatment plan before submitting.")
 
 # --- Chat Section ---
 with col1:
@@ -136,7 +138,7 @@ with col1:
     user_input = st.chat_input("Ask a follow-up question...")
 
 # --- Initial Explanation of Prescription ---
-if st.session_state.prescription and not st.session_state.prescription_explained:
+if st.session_state.prescription and st.session_state.treatment_plan and not st.session_state.prescription_explained:
     prescription_text = st.session_state.prescription.strip()
     treatment_text = st.session_state.treatment_plan.strip()
 
@@ -188,7 +190,9 @@ if user_input:
         "time": datetime.now().strftime("%H:%M")
     })
 
-    # Build chat history prompt with context
+    prescription_text = st.session_state.prescription.strip()
+    treatment_text = st.session_state.treatment_plan.strip()
+
     prompt = (
         "\n\nHuman: You are an optometrist explaining a diagnosis and treatment plan to a patient with no optometry knowledge.\n"
         f"Diagnosis: {prescription_text}\n"
@@ -196,7 +200,6 @@ if user_input:
         "Please explain the above in simple terms and ask if the patient has any questions.\n\n"
         "Assistant:"
     )
-
 
     for msg in st.session_state.messages:
         role = "Human" if msg["role"] == "user" else "Assistant"
