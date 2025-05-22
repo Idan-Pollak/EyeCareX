@@ -143,11 +143,11 @@ if st.session_state.prescription and st.session_state.treatment_plan and not st.
     treatment_text = st.session_state.treatment_plan.strip()
 
     prompt = (
-        "You are an optometrist explaining a diagnosis and treatment plan to a patient with no optometry knowledge.\n\n"
-        f"Diagnosis: {prescription_text}\n"
-        f"Treatment Plan: {treatment_text}\n\n"
-        "Please explain the above in simple terms and ask if the patient has any questions.\n\n"
-        "Assistant:"
+    "\n\nHuman: You are an optometrist explaining a diagnosis and treatment plan to a patient with no optometry knowledge.\n"
+    f"Diagnosis: {prescription_text}\n"
+    f"Treatment Plan: {treatment_text}\n"
+    "Please explain the above in simple terms and ask if the patient has any questions."
+    "\n\nAssistant:"
     )
 
     lambda_payload = {
