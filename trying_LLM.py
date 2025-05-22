@@ -20,23 +20,18 @@ if not st.session_state.authenticated:
         st.error("Incorrect password. Please try again.")
     st.stop()
 
-# --- AWS setup ---
-lambda_client = boto3.client(
-    "lambda",
+# --- Bedrock setup ---
+bedrock = boto3.client(
+    "bedrock-runtime",
     region_name="us-east-1",
     aws_access_key_id=st.secrets["AWS_ACCESS_KEY_ID"],
     aws_secret_access_key=st.secrets["AWS_SECRET_ACCESS_KEY"]
 )
 
 # --- Session State Initialization ---
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "prescription" not in st.session_state:
-    st.session_state.prescription = ""
-if "treatment_plan" not in st.session_state:
-    st.session_state.treatment_plan = ""
-if "prescription_explained" not in st.session_state:
-    st.session_state.prescription_explained = False
+for key in ["messages", "prescription", "treatment_plan", "prescription_explained"]:
+    if key not in st.session_state:
+        st.session_state[key] = [] if key == "messages" else (False if key == "prescription_explained" else "")
 
 # --- CSS Styles ---
 st.markdown("""
@@ -88,23 +83,12 @@ with col2:
         st.rerun()
 
     st.subheader("Doctor's Diagnosis")
-    new_prescription = st.text_area(
-        "Enter patient diagnosis:",
-        value=st.session_state.prescription,
-        height=150
-    )
+    new_prescription = st.text_area("Enter patient diagnosis:", value=st.session_state.prescription, height=150)
 
     st.subheader("Patient Treatment Plan")
-    new_treatment_plan = st.text_area(
-        "Enter treatment plan:",
-        value=st.session_state.treatment_plan,
-        height=150
-    )
+    new_treatment_plan = st.text_area("Enter treatment plan:", value=st.session_state.treatment_plan, height=150)
 
-    # --- Submit button to confirm both inputs ---
-    submit_inputs = st.button("Finish")
-
-    if submit_inputs:
+    if st.button("Finish"):
         if new_prescription.strip() and new_treatment_plan.strip():
             st.session_state.prescription = new_prescription
             st.session_state.treatment_plan = new_treatment_plan
@@ -137,52 +121,50 @@ with col1:
 
     user_input = st.chat_input("Ask a follow-up question...")
 
-# --- Initial Explanation of Prescription ---
-if st.session_state.prescription and st.session_state.treatment_plan and not st.session_state.prescription_explained:
-    prescription_text = st.session_state.prescription.strip()
-    treatment_text = st.session_state.treatment_plan.strip()
-
-    prompt = (
-    "\n\nHuman: You are an optometrist explaining a diagnosis and treatment plan to a patient with no optometry knowledge.\n"
-    f"Diagnosis: {prescription_text}\n"
-    f"Treatment Plan: {treatment_text}\n"
-    "Please explain the above in simple terms and ask if the patient has any questions."
-    "\n\nAssistant:"
-    )
-
-    lambda_payload = {
+# --- Bedrock Helper Function ---
+def query_bedrock(prompt: str) -> str:
+    model_id = "anthropic.claude-instant-v1"  # Or use another available model ID
+    body = {
         "prompt": prompt,
-        "max_tokens": 250,
+        "max_tokens_to_sample": 250,
         "temperature": 0.3,
         "top_k": 250,
         "top_p": 1,
         "stop_sequences": ["\n\nHuman:"]
     }
 
+    response = bedrock.invoke_model(
+        modelId=model_id,
+        contentType="application/json",
+        accept="application/json",
+        body=json.dumps(body)
+    )
+
+    response_body = json.loads(response['body'].read())
+    return response_body['completion']
+
+# --- Initial Explanation ---
+if st.session_state.prescription and st.session_state.treatment_plan and not st.session_state.prescription_explained:
+    base_prompt = (
+        "\n\nHuman: You are an optometrist explaining a diagnosis and treatment plan to a patient with no optometry knowledge.\n"
+        f"Diagnosis: {st.session_state.prescription}\n"
+        f"Treatment Plan: {st.session_state.treatment_plan}\n"
+        "Please explain the above in simple terms and ask if the patient has any questions.\n\nAssistant:"
+    )
+
     try:
-        response = lambda_client.invoke(
-            FunctionName='BedrockLambdaStack-EducationChatLambda8A98495D-bgJljCsKtrzd',
-            InvocationType='RequestResponse',
-            Payload=json.dumps(lambda_payload)
-        )
-        response_payload = json.loads(response['Payload'].read())
-
-        if response_payload.get("statusCode") == 200:
-            output = json.loads(response_payload['body'])['completion']
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": output,
-                "time": datetime.now().strftime("%H:%M")
-            })
-            st.session_state.prescription_explained = True
-            st.rerun()
-        else:
-            st.error(f"Lambda error: {response_payload.get('body', 'Unknown error')}")
-
+        response_text = query_bedrock(base_prompt)
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": response_text,
+            "time": datetime.now().strftime("%H:%M")
+        })
+        st.session_state.prescription_explained = True
+        st.rerun()
     except Exception as e:
-        st.error(f"Error: {str(e)}")
+        st.error(f"Bedrock Error: {e}")
 
-# --- Handle Patient Follow-up ---
+# --- Handle Follow-up ---
 if user_input:
     st.session_state.messages.append({
         "role": "user",
@@ -190,50 +172,25 @@ if user_input:
         "time": datetime.now().strftime("%H:%M")
     })
 
-    prescription_text = st.session_state.prescription.strip()
-    treatment_text = st.session_state.treatment_plan.strip()
-
-    prompt = (
+    followup_prompt = (
         "\n\nHuman: You are an optometrist explaining a diagnosis and treatment plan to a patient with no optometry knowledge.\n"
-        f"Diagnosis: {prescription_text}\n"
-        f"Treatment Plan: {treatment_text}\n"
+        f"Diagnosis: {st.session_state.prescription}\n"
+        f"Treatment Plan: {st.session_state.treatment_plan}\n"
         "Please explain the above in simple terms and ask if the patient has any questions.\n\n"
-        "Assistant:"
     )
 
     for msg in st.session_state.messages:
         role = "Human" if msg["role"] == "user" else "Assistant"
-        content = msg["content"].strip()
-        prompt += f"{role}: {content}\n\n"
-    prompt += "Assistant:"
-
-    lambda_payload = {
-        "prompt": prompt,
-        "max_tokens": 200,
-        "temperature": 0.3,
-        "top_k": 250,
-        "top_p": 1,
-        "stop_sequences": ["\n\nHuman:"]
-    }
+        followup_prompt += f"{role}: {msg['content'].strip()}\n\n"
+    followup_prompt += "Assistant:"
 
     try:
-        response = lambda_client.invoke(
-            FunctionName='BedrockLambdaStack-EducationChatLambda8A98495D-bgJljCsKtrzd',
-            InvocationType='RequestResponse',
-            Payload=json.dumps(lambda_payload)
-        )
-
-        response_payload = json.loads(response['Payload'].read())
-        if response_payload.get("statusCode") == 200:
-            output = json.loads(response_payload['body'])['completion']
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": output,
-                "time": datetime.now().strftime("%H:%M")
-            })
-            st.rerun()
-        else:
-            st.error(f"Lambda Error: {response_payload.get('body', 'Unknown error')}")
-
+        response_text = query_bedrock(followup_prompt)
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": response_text,
+            "time": datetime.now().strftime("%H:%M")
+        })
+        st.rerun()
     except Exception as e:
-        st.error(f"Error: {str(e)}")
+        st.error(f"Bedrock Error: {e}")
