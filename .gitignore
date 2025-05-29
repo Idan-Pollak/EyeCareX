@@ -14,4 +14,4 @@ cdk.out/
 cdk.context.json
 
 # Project specific
-cdk/__pycache__/ 
+cdk/__pycache__/*
